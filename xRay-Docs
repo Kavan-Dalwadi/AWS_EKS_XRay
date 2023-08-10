@@ -1,0 +1,19 @@
+aws configure
+aws eks update-kubeconfig --name apm
+eksctl version
+eksctl utils associate-iam-oidc-provider --approve --cluster apm
+eksctl create iamserviceaccount --name xray-daemon --namespace default --cluster apm --attach-policy-arn arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess --approve --override-existing-serviceaccounts
+kubectl label serviceaccount xray-daemon app=xray-daemon
+kubectl create -f https://eksworkshop.com/intermediate/245_x-ray/daemonset.files/xray-k8s-daemonset.yaml
+cd Documents/EKS/
+mkdir x-ray
+cd x-ray/
+nano xRay-DaemonSet.yaml
+kubectl apply -f xRay-DaemonSet.yaml 
+kubectl describe daemonset xray-daemon
+kubectl apply -f https://eksworkshop.com/intermediate/245_x-ray/sample-front.files/x-ray-sample-front-k8s.yml
+kubectl apply -f https://eksworkshop.com/intermediate/245_x-ray/sample-back.files/x-ray-sample-back-k8s.yml
+kubectl get service x-ray-sample-front-k8s -o wide
+cd ./aws-xray-sdk-node-sample/
+docker build -t api-nodejs:xray-test-v1 .
+kubectl apply -f xray-custom.yaml
